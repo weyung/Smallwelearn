@@ -1,0 +1,8 @@
+# configuration
+./settings.json
+
+# cache
+./__pycache__
+
+# logs
+./welearn.log
