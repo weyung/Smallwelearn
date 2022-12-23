@@ -3,17 +3,23 @@ import asyncio
 from pyppeteer import launch
 from pyppeteer_stealth import stealth
 
+COURSE = {
+    1: {'cid': 297, 'classid': 000000},
+    2: {'cid': 296, 'classid': 306558},
+    3: {'cid': 295, 'classid': 362790},
+}
+
 
 async def next_class(page):
     f = page.frames[0]
-    btn_next = '#form1 > div.courseware_sidebar_2 > ul.c_s_3 > li.c_s_3_2 > a'
+    btn_next = '#form1 > div.courseware_sidebar_2 > ul.c_s_3 > li.c_s_3_2 > a'  # 若 selector 有变，可在此修改
     await f.click(btn_next)
 
 async def fill_ans(page, answer, unit, idx):
     ans, raw = answer
-    if not ans[0]:  # 若非填空题
+    if not ans[0]:  # 若非填空题则跳过
         return
-    ans = ans[0]
+    ans = ans[0]    # 取答案中的填空题部分
 
     f = page.frames[0].childFrames[0]
     optionsPicker = await f.J('div.optionsPicker')
@@ -37,7 +43,7 @@ async def fill_ans(page, answer, unit, idx):
         sp = await blank.J('span.wrapper')
         spsp = await sp.J('span')
         txt = await f.evaluate('(element) => element.textContent', spsp)
-        if txt != ans[i]:   # 若该空未填
+        if txt != ans[i]:       # 若该空已填写正确答案则跳过
             await sp.click()    # 点击空，弹出选项表
             ans[i] = ans[i].lower()
             if ans[i] not in option_elements:
@@ -68,24 +74,21 @@ async def main(args):
     # 课程首页
     await page.waitForNavigation()
     logger.info('Logged in')
-    await page.goto('https://welearn.sflep.com/student/course_info.aspx?cid=295')
 
-    # 课程描述页面
-    await page.goto('https://welearn.sflep.com/student/StudyCourse.aspx?cid=295&classid=362790')
+    # 课程使用说明页面
+    cid, classid = COURSE[args['course']]['cid'], COURSE[args['course']]['classid']
+    await page.goto('https://welearn.sflep.com/student/StudyCourse.aspx?cid={}&classid={}'.format(cid, classid))
 
     from getans import getans
     await asyncio.sleep(2)
     await next_class(page)
 
     while True:
-        # 检测是否已经提交过答案
-        
-
         url = page.frames[0].childFrames[0].url
         unit, idx = url.split('?')[0].split('/')[-2:]
         logger.info('\033[33mUnit {}\033[0m \033[32m{}\033[0m Start'.format(unit, idx))
         answer = getans(
-            'https://centercourseware.sflep.com/New College English Viewing Listening Speaking 3/data/{}/{}.html'.format(unit, idx))
+            'https://centercourseware.sflep.com/New College English Viewing Listening Speaking {}/data/{}/{}.html'.format(args['course'],unit, idx))
         logger.info('\033[33mUnit {}\033[0m \033[32m{}\033[0m Answer got'.format(unit, idx))
         await fill_ans(page, answer, unit, idx)
         await next_class(page)
