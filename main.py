@@ -24,7 +24,6 @@ async def fill_ans(page, answer, unit, idx):
     option_elements = {}
     for option in options:
         content = await f.evaluate('(element) => element.textContent', option)
-        # get attr "option" of the option, like <li option="A">A</li>
         opt = await f.evaluate('(element) => element.getAttribute("option")', option)
         if opt:
             content = opt
@@ -43,8 +42,9 @@ async def fill_ans(page, answer, unit, idx):
             ans[i] = ans[i].lower()
             if ans[i] not in option_elements:
                 logger.error('\033[33mUnit {}\033[0m \033[32m{}\033[0m No answer: {}'.format(unit, idx, ans[i]))    # 答案不在选项中
-                await option_elements[ans[i]].click()
+            await option_elements[ans[i]].click()
     logger.info('\033[33mUnit {}\033[0m \033[32m{}\033[0m Answers filled'.format(unit, idx))
+    input("Press Enter to continue...")
 
 
 async def main(args):
@@ -79,7 +79,7 @@ async def main(args):
 
     while True:
         # 检测是否已经提交过答案
-
+        
 
         url = page.frames[0].childFrames[0].url
         unit, idx = url.split('?')[0].split('/')[-2:]

@@ -11,7 +11,7 @@ def getans(url):
     '''
     res = r.get(url)
     # \xc3\xa9 = é, &gt; = >, we need to escape them
-    txt = res.text.encode('latin-1').decode('utf-8').replace('&gt;', '>')
+    txt = res.text.encode('latin-1').decode('utf-8').replace('&gt;', '>').replace('capitolize', 'capitalize')
 
     pat = [r'<et-blank(?: capitalize)?>(.*?)</et-blank>',
            r'<et-tof key="(\w)">',
